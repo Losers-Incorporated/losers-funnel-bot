@@ -2,7 +2,7 @@ import os
 import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import Message
-from aiogram.enums import ParseMode
+from aiogram.types import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from aiogram import Router
