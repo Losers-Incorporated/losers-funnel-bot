@@ -1,3 +1,4 @@
-wheel
 aiogram==2.25.1
 aiohttp==3.8.1
+chardet==3.0.4
+wheel==0.38.4
