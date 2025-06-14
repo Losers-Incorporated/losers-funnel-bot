@@ -1,47 +1,41 @@
-import os
 import logging
-from aiogram import Bot, Dispatcher, types
-from aiogram.types import Message
-from aiogram.types import ParseMode
+from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.utils.keyboard import ReplyKeyboardBuilder
-from aiogram import Router
-import asyncio
 
-# Logging setup
+API_TOKEN = "YOUR_BOT_TOKEN_HERE"
+
+# Set up bot and dispatcher
 logging.basicConfig(level=logging.INFO)
+bot = Bot(token=API_TOKEN)
+storage = MemoryStorage()
+dp = Dispatcher(bot, storage=storage)
 
-# Telegram Bot Token from environment variable
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+# Reply keyboard setup, using 2.x style
+def get_main_keyboard():
+    kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    kb.add(types.KeyboardButton("Start"))
+    kb.add(types.KeyboardButton("Help"))
+    return kb
 
-# Create Bot and Dispatcher
-bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.HTML)
-dp = Dispatcher(storage=MemoryStorage())
+@dp.message_handler(commands=['start'])
+async def cmd_start(message: types.Message):
+    await message.reply("Welcome! Here’s your main keyboard:", reply_markup=get_main_keyboard())
 
-# Router for commands
-router = Router()
+@dp.message_handler(commands=['help'])
+async def cmd_help(message: types.Message):
+    await message.reply("Type 'Start' to begin using the bot.")
 
-@router.message(commands=["start"])
-async def cmd_start(message: Message):
-    await message.answer("👋 Welcome to Losers Funnel Bot!\nSend /funnel <symbol> to get started.")
+@dp.message_handler(lambda msg: msg.text == "Start")
+async def handle_start_text(message: types.Message):
+    await message.reply("Let’s get going! 🚀")
 
-@router.message(lambda message: message.text.lower().startswith("/funnel"))
-async def handle_funnel(message: Message):
-    text = message.text.strip()
-    try:
-        symbol = text.split()[1].upper()
-        # Stub response
-        await message.answer(f"📊 Funnel logic for <b>{symbol}</b> is processing... [Simulated output]")
-    except IndexError:
-        await message.answer("⚠️ Usage: /funnel <symbol>")
+@dp.message_handler(lambda msg: msg.text == "Help")
+async def handle_help_text(message: types.Message):
+    await message.reply("How can I assist you today?")
 
-# Bind router
-dp.include_router(router)
+@dp.message_handler()
+async def echo_all(message: types.Message):
+    await message.reply(f"You said: {message.text}")
 
-# Entry point
-async def main():
-    await dp.start_polling(bot)
-
-if __name__ == "__main__":
-    asyncio.run(main())
-
+if __name__ == '__main__':
+    executor.start_polling(dp, skip_updates=True)
