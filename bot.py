@@ -1,4 +1,4 @@
-from aiogram import Bot, Dispatcher, F
+from aiogram import Bot, Dispatcher, F, Router
 from aiogram.types import Update, Message
 from aiogram.fsm.storage.memory import MemoryStorage
 from fastapi import FastAPI, Request
@@ -14,10 +14,15 @@ WEBHOOK_URL = f"https://funnel-bot-service.onrender.com{WEBHOOK_PATH}"
 bot = Bot(token=TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
 
-# ✅ Message handler: /start
-@dp.message(F.text == "/start")
+# ✅ Setup router and handler
+router = Router()
+
+@router.message(F.text == "/start")
 async def start_handler(message: Message):
     await message.answer("👋 Hello! Funnel bot is live and webhook-connected.")
+
+# Register router to dispatcher
+dp.include_router(router)
 
 # FastAPI app
 app = FastAPI()
