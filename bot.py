@@ -29,6 +29,12 @@ async def start_handler(message: Message):
     logger.info(f"/start triggered by {message.from_user.id}")
     await message.answer("👋 Hello! Funnel bot is live and webhook-connected.")
 
+# /ping (debug check)
+@router.message(F.text == "/ping")
+async def ping_handler(message: Message):
+    logger.info(f"/ping triggered by {message.from_user.id}")
+    await message.answer("✅ Pong! Bot is working.")
+
 # /funnel <stock>
 @router.message(F.text.startswith("/funnel"))
 async def funnel_handler(message: Message):
@@ -46,7 +52,8 @@ async def funnel_handler(message: Message):
     logger.info(f"/funnel triggered for {stock} by {message.from_user.id}")
 
     await message.answer(
-        f"📊 Funnel Projection for *{stock}*\nEntry: ₹{entry} | Stop: ₹{stop} | Target: ₹{target}",
+        f"📊 Funnel Projection for *{stock}*
+Entry: ₹{entry} | Stop: ₹{stop} | Target: ₹{target}",
         parse_mode="Markdown"
     )
 
