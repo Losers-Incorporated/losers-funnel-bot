@@ -1,17 +1,25 @@
-from aiogram import Bot, Dispatcher
-from aiogram.types import Update
+from aiogram import Bot, Dispatcher, F
+from aiogram.types import Update, Message
 from aiogram.fsm.storage.memory import MemoryStorage
 from fastapi import FastAPI, Request
 import uvicorn
 import os
 
+# Telegram bot token and webhook config
 TOKEN = os.getenv("BOT_TOKEN")
 WEBHOOK_PATH = f"/webhook/{TOKEN}"
-WEBHOOK_URL = f"https://your-render-url.onrender.com{WEBHOOK_PATH}"
+WEBHOOK_URL = f"https://funnel-bot-service.onrender.com{WEBHOOK_PATH}"
 
+# Bot and Dispatcher setup
 bot = Bot(token=TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
 
+# ✅ Message handler: /start
+@dp.message(F.text == "/start")
+async def start_handler(message: Message):
+    await message.answer("👋 Hello! Funnel bot is live and webhook-connected.")
+
+# FastAPI app
 app = FastAPI()
 
 @app.post(WEBHOOK_PATH)
@@ -30,4 +38,4 @@ async def on_shutdown():
     await bot.delete_webhook()
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
+    uvicorn.run("bot:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
