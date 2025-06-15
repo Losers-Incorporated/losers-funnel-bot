@@ -26,18 +26,20 @@ async def start_handler(message: Message):
 # /funnel <stock>
 @router.message(F.text.startswith("/funnel"))
 async def funnel_handler(message: Message):
-    parts = message.text.strip().split()
+    parts = message.text.strip().split(maxsplit=1)
+    print("DEBUG /funnel received:", parts)
     if len(parts) != 2:
         await message.answer("⚠️ Usage: /funnel RELIANCE")
         return
 
-    stock = parts[1].upper()
+    stock = parts[1].strip().upper()
     price = random.randint(200, 1000)
     entry = price
     stop = entry - 25
     target = entry + 80
     await message.answer(
-        f"📊 Funnel Projection for *{stock}*\nEntry: ₹{entry} | Stop: ₹{stop} | Target: ₹{target}",
+        f"📊 Funnel Projection for *{stock}*
+Entry: ₹{entry} | Stop: ₹{stop} | Target: ₹{target}",
         parse_mode="Markdown"
     )
 
@@ -81,7 +83,9 @@ async def scan_handler(message: Message):
         stop = entry - random.randint(10, 30)
         target = entry + random.randint(30, 80)
         response_lines.append(
-            f"*{stock}* — {signal}\nEntry: ₹{entry} | Stop: ₹{stop} | Target: ₹{target}\nRSI: {rsi} | Vol Spike: {vol_spike}"
+            f"*{stock}* — {signal}
+Entry: ₹{entry} | Stop: ₹{stop} | Target: ₹{target}
+RSI: {rsi} | Vol Spike: {vol_spike}"
         )
 
     await message.answer("\n\n".join(response_lines), parse_mode="Markdown")
