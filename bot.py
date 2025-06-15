@@ -8,7 +8,7 @@ import random
 
 # Telegram bot token and webhook config
 TOKEN = os.getenv("BOT_TOKEN")
-WEBHOOK_PATH = f"/webhook/{{{TOKEN}}}"
+WEBHOOK_PATH = f"/webhook/{TOKEN}"
 WEBHOOK_URL = f"https://funnel-bot-service.onrender.com{WEBHOOK_PATH}"
 
 # Bot and Dispatcher setup
