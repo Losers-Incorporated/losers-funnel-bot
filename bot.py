@@ -52,8 +52,7 @@ async def funnel_handler(message: Message):
     logger.info(f"/funnel triggered for {stock} by {message.from_user.id}")
 
     await message.answer(
-        f"📊 Funnel Projection for *{stock}*
-Entry: ₹{entry} | Stop: ₹{stop} | Target: ₹{target}",
+       f"📊 Funnel Projection for *{stock}*\nEntry: ₹{entry} | Stop: ₹{stop} | Target: ₹{target}",
         parse_mode="Markdown"
     )
 
