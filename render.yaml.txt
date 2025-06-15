@@ -1,6 +1,9 @@
-build:
-  pythonVersion: 3.11.6
-  installPackages:
-    - pip
-    - wheel
-    - setuptools
+services:
+  - type: web
+    name: telegram-bot
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: BOT_TOKEN
+        value: <your-telegram-bot-token>
