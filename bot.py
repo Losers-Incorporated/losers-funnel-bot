@@ -5,6 +5,11 @@ from fastapi import FastAPI, Request
 import uvicorn
 import os
 import random
+import logging
+
+# Logging setup
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Telegram bot token and webhook config
 TOKEN = os.getenv("BOT_TOKEN")
@@ -21,25 +26,27 @@ router = Router()
 # /start
 @router.message(F.text == "/start")
 async def start_handler(message: Message):
+    logger.info(f"/start triggered by {message.from_user.id}")
     await message.answer("👋 Hello! Funnel bot is live and webhook-connected.")
 
 # /funnel <stock>
 @router.message(F.text.startswith("/funnel"))
 async def funnel_handler(message: Message):
-    parts = message.text.strip().split(maxsplit=1)
-    print("DEBUG /funnel received:", parts)
+    parts = message.text.strip().split()
     if len(parts) != 2:
         await message.answer("⚠️ Usage: /funnel RELIANCE")
         return
 
-    stock = parts[1].strip().upper()
+    stock = parts[1].upper()
     price = random.randint(200, 1000)
     entry = price
     stop = entry - 25
     target = entry + 80
+
+    logger.info(f"/funnel triggered for {stock} by {message.from_user.id}")
+
     await message.answer(
-        f"📊 Funnel Projection for *{stock}*
-Entry: ₹{entry} | Stop: ₹{stop} | Target: ₹{target}",
+        f"📊 Funnel Projection for *{stock}*\nEntry: ₹{entry} | Stop: ₹{stop} | Target: ₹{target}",
         parse_mode="Markdown"
     )
 
@@ -74,6 +81,8 @@ async def scan_handler(message: Message):
         await message.answer(f"⚠️ No matching theme found for: {query}")
         return
 
+    logger.info(f"/scan triggered for theme '{theme}' by {message.from_user.id}")
+
     response_lines = [f"📊 Funnel Scan — *{theme.title()}*"]
     for stock in stock_list[:5]:
         rsi = random.randint(45, 75)
@@ -83,9 +92,7 @@ async def scan_handler(message: Message):
         stop = entry - random.randint(10, 30)
         target = entry + random.randint(30, 80)
         response_lines.append(
-            f"*{stock}* — {signal}
-Entry: ₹{entry} | Stop: ₹{stop} | Target: ₹{target}
-RSI: {rsi} | Vol Spike: {vol_spike}"
+            f"*{stock}* — {signal}\nEntry: ₹{entry} | Stop: ₹{stop} | Target: ₹{target}\nRSI: {rsi} | Vol Spike: {vol_spike}"
         )
 
     await message.answer("\n\n".join(response_lines), parse_mode="Markdown")
@@ -107,6 +114,8 @@ async def price_handler(message: Message):
         "close": round(price - random.uniform(3, 15), 2),
     }
     volume = random.randint(100000, 8000000)
+
+    logger.info(f"/price triggered for {stock} by {message.from_user.id}")
 
     msg = (
         f"📉 *{stock}* — Intraday Snapshot\n"
@@ -132,11 +141,14 @@ async def webhook(request: Request):
 
 @app.on_event("startup")
 async def on_startup():
+    logger.info("Setting webhook...")
     await bot.set_webhook(WEBHOOK_URL)
 
 @app.on_event("shutdown")
 async def on_shutdown():
+    logger.info("Removing webhook...")
     await bot.delete_webhook()
 
 if __name__ == "__main__":
+    logger.info("Starting Uvicorn server...")
     uvicorn.run("bot:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
