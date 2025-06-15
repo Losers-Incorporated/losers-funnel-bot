@@ -14,8 +14,6 @@ WEBHOOK_URL = f"https://funnel-bot-service.onrender.com{WEBHOOK_PATH}"
 # Bot and Dispatcher setup
 bot = Bot(token=TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
-
-# Router setup
 router = Router()
 
 # /start
@@ -30,11 +28,13 @@ async def funnel_handler(message: Message):
     if len(parts) != 2:
         await message.answer("⚠️ Usage: /funnel RELIANCE")
         return
+
     stock = parts[1].upper()
     price = random.randint(200, 1000)
     entry = price
     stop = entry - 25
     target = entry + 80
+
     await message.answer(
         f"📊 Funnel Projection for *{stock}*\nEntry: ₹{entry} | Stop: ₹{stop} | Target: ₹{target}",
         parse_mode="Markdown"
@@ -48,7 +48,7 @@ SECTOR_MAP = {
     "banking": ["HDFCBANK", "ICICIBANK", "KOTAKBANK", "AXISBANK"],
     "fmcg": ["HINDUNILVR", "DABUR", "BRITANNIA"],
     "defense": ["HAL", "BEL", "BDL", "BEML"],
-    "petrochemical": ["RELIANCE", "ONGC", "GAIL"],
+    "petrochemical": ["RELIANCE", "ONGC", "GAIL"]
 }
 
 THEME_ALIASES = {
@@ -66,12 +66,12 @@ async def scan_handler(message: Message):
     query = message.text.replace("/scan", "").strip().lower()
     theme = THEME_ALIASES.get(query, query)
     stock_list = SECTOR_MAP.get(theme)
+
     if not stock_list:
         await message.answer(f"⚠️ No matching theme found for: {query}")
         return
 
     response_lines = [f"📊 Funnel Scan — *{theme.title()}*"]
-
     for stock in stock_list[:5]:
         rsi = random.randint(45, 75)
         vol_spike = random.choice(["✅", "⚠", "—"])
@@ -81,12 +81,12 @@ async def scan_handler(message: Message):
         target = entry + random.randint(30, 80)
 
         response_lines.append(
-            f"\n*{stock}* — {signal}\nEntry: ₹{entry} | Stop: ₹{stop} | Target: ₹{target}\nRSI: {rsi} | Vol Spike: {vol_spike}"
+            f"*{stock}* — {signal}\nEntry: ₹{entry} | Stop: ₹{stop} | Target: ₹{target}\nRSI: {rsi} | Vol Spike: {vol_spike}"
         )
 
-    await message.answer("\n".join(response_lines), parse_mode="Markdown")
+    await message.answer("\n\n".join(response_lines), parse_mode="Markdown")
 
-# /price <stock>
+# /price <stock> (simulated)
 @router.message(F.text.startswith("/price"))
 async def price_handler(message: Message):
     parts = message.text.strip().split()
