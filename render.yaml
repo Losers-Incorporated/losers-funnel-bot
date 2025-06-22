@@ -7,6 +7,8 @@ services:
     envVars:
       - key: BOT_TOKEN
         value: 7567652240:AAFCPICk9xPQDWjUp_-6mtohj7qIVPHYx9Q
+      - key: API_KEY
+        value: qamoej8ga26cbfxh
 
   - type: cron
     name: generate-zerodha-token
@@ -21,4 +23,3 @@ services:
         value: i7uxaze048ezqzrpo9at210waeel4lyn
       - key: REQUEST_TOKEN
         value: qSf8E82V3G4eE8u2dBVrmq5AXl6LeQa9
-
