@@ -6,4 +6,19 @@ services:
     startCommand: python main.py
     envVars:
       - key: BOT_TOKEN
-        value: <your-telegram-bot-token>
+        value: 7567652240:AAFCPICk9xPQDWjUp_-6mtohj7qIVPHYx9Q
+
+  - type: cron
+    name: generate-zerodha-token
+    schedule: "@daily"
+    runtime: python
+    buildCommand: ""
+    startCommand: python generate_token.py
+    envVars:
+      - key: API_KEY
+        value: qamoej8ga26cbfxh
+      - key: API_SECRET
+        value: i7uxaze048ezqzrpo9at210waeel4lyn
+      - key: REQUEST_TOKEN
+        value: qSf8E82V3G4eE8u2dBVrmq5AXl6LeQa9
+
