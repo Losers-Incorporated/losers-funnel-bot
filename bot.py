@@ -2,6 +2,7 @@ from aiogram import Bot, Dispatcher, F, Router
 from aiogram.types import Update, Message
 from aiogram.fsm.storage.memory import MemoryStorage
 from fastapi import FastAPI, Request
+from kiteconnect import KiteConnect
 import uvicorn
 import os
 import random
@@ -16,6 +17,16 @@ TOKEN = os.getenv("BOT_TOKEN")
 WEBHOOK_PATH = f"/webhook/{TOKEN}"
 WEBHOOK_URL = f"https://funnel-bot-service.onrender.com{WEBHOOK_PATH}"
 
+# Zerodha Kite Connect Setup
+kite = KiteConnect(api_key=os.getenv("API_KEY"))
+try:
+    with open("access_token.txt", "r") as f:
+        latest_token = f.read().strip()
+        kite.set_access_token(latest_token)
+        logger.info("✅ Loaded latest Zerodha access token.")
+except Exception as e:
+    logger.error(f"⚠️ Failed to load access token: {e}")
+
 # Bot and Dispatcher setup
 bot = Bot(token=TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
@@ -23,19 +34,16 @@ dp = Dispatcher(storage=MemoryStorage())
 # Router setup
 router = Router()
 
-# /start
 @router.message(F.text == "/start")
 async def start_handler(message: Message):
     logger.info(f"/start triggered by {message.from_user.id}")
     await message.answer("👋 Hello! Funnel bot is live and webhook-connected.")
 
-# /ping (debug check)
 @router.message(F.text == "/ping")
 async def ping_handler(message: Message):
     logger.info(f"/ping triggered by {message.from_user.id}")
     await message.answer("✅ Pong! Bot is working.")
 
-# /funnel <stock>
 @router.message(F.text.startswith("/funnel"))
 async def funnel_handler(message: Message):
     parts = message.text.strip().split()
@@ -56,7 +64,6 @@ async def funnel_handler(message: Message):
         parse_mode="Markdown"
     )
 
-# Sector map for scan
 SECTOR_MAP = {
     "nifty 50": ["RELIANCE", "INFY", "TCS", "HDFCBANK", "SBIN", "ITC"],
     "ev": ["TATAMOTORS", "AMARAJABAT", "GREAVES"],
@@ -76,7 +83,6 @@ THEME_ALIASES = {
     "defence": "defense",
 }
 
-# /scan <theme>
 @router.message(F.text.startswith("/scan"))
 async def scan_handler(message: Message):
     query = message.text.replace("/scan", "").strip().lower()
@@ -103,7 +109,6 @@ async def scan_handler(message: Message):
 
     await message.answer("\n\n".join(response_lines), parse_mode="Markdown")
 
-# /price <stock>
 @router.message(F.text.startswith("/price"))
 async def price_handler(message: Message):
     parts = message.text.strip().split()
