@@ -1,41 +1,40 @@
 import os
-from kiteconnect import KiteConnect
 import subprocess
+import tempfile
+import shutil
+from kiteconnect import KiteConnect
 
-# Load credentials from environment
+# Load credentials
 api_key = os.getenv("API_KEY")
 api_secret = os.getenv("API_SECRET")
 request_token = os.getenv("REQUEST_TOKEN")
 github_token = os.getenv("GITHUB_TOKEN")
 
-# ✅ Correct GitHub repo URL format
+# GitHub repo URL
 repo_url = "https://github.com/Losers-Incorporated/losers-funnel-bot.git"
 remote_url = repo_url.replace("https://", f"https://{github_token}@")
 
-kite = KiteConnect(api_key=api_key)
+# Create a temporary working directory
+with tempfile.TemporaryDirectory() as tmpdir:
+    os.chdir(tmpdir)
+    subprocess.run(["git", "clone", remote_url, "."], check=True)
 
-try:
-    # Generate access token using KiteConnect
-    data = kite.generate_session(request_token, api_secret=api_secret)
-    access_token = data["access_token"]
+    # Generate token using KiteConnect
+    kite = KiteConnect(api_key=api_key)
+    try:
+        data = kite.generate_session(request_token, api_secret=api_secret)
+        access_token = data["access_token"]
 
-    # Save token to file
-    with open("access_token.txt", "w") as f:
-        f.write(access_token)
+        with open("access_token.txt", "w") as f:
+            f.write(access_token)
+        print("✅ Access token saved.")
 
-    print("✅ Access token saved.")
+        subprocess.run(["git", "config", "user.email", "cron@bot.com"], check=True)
+        subprocess.run(["git", "config", "user.name", "Render Cron Bot"], check=True)
+        subprocess.run(["git", "add", "access_token.txt"], check=True)
+        subprocess.run(["git", "commit", "-m", "Update token"], check=True)
+        subprocess.run(["git", "push", "origin", "main"], check=True)
+        print("🚀 Token pushed to GitHub.")
 
-    # Git configuration and push
-    subprocess.run(["git", "config", "--global", "user.email", "cron@bot.com"])
-    subprocess.run(["git", "config", "--global", "user.name", "Render Cron Bot"])
-    subprocess.run(["git", "init"])
-    subprocess.run(["git", "remote", "remove", "origin"], stderr=subprocess.DEVNULL)  # Remove if exists
-    subprocess.run(["git", "remote", "add", "origin", remote_url])
-    subprocess.run(["git", "add", "access_token.txt"])
-    subprocess.run(["git", "commit", "-m", "Update token"])
-    subprocess.run(["git", "push", "origin", "main"])
-
-    print("🚀 Token pushed to GitHub.")
-
-except Exception as e:
-    print("❌ Failed to generate token:", e)
+    except Exception as e:
+        print("❌ Failed to generate token:", e)
