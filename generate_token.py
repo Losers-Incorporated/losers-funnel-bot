@@ -8,9 +8,9 @@ api_secret = os.getenv("API_SECRET")
 data = kite.generate_session(request_token, api_secret=api_secret)
 kite.set_access_token(data["access_token"])
 
-print("✅ Access token generated successfully.")
-print("Access Token:", data["access_token"])
-
-# Optional: save to file
+# Save to file
 with open("access_token.txt", "w") as f:
     f.write(data["access_token"])
+
+print("✅ Access token generated and saved.")
+
