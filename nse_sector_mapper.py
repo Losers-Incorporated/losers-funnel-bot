@@ -1,44 +1,49 @@
+# ✅ Updated: nse_sector_mapper.py (Auto-fetch NSE stock-sector mapping)
+# Saves output as sector_mapping_nse.csv
+
 import requests
 import pandas as pd
 import time
 
-SECTORS = [
-    "FMCG", "IT", "Energy", "Pharma", "Auto",
-    "Bank", "Metal", "Realty", "OilGas", "FinancialServices",
-    "Healthcare"
-]
-
-BASE_URL = "https://www1.nseindia.com/live_market/dynaContent/live_watch/stock_watch/{}StockWatch.json"
+BASE_URL = "https://www.nseindia.com"
 HEADERS = {
     "User-Agent": "Mozilla/5.0",
-    "Referer": "https://www1.nseindia.com/live_market/dynaContent/live_watch/stock_watch/niftyStockWatch.htm"
+    "Accept": "application/json",
+    "Referer": "https://www.nseindia.com/"
 }
 
+SECTORS = [
+    "AUTO", "BANK", "FINANCE", "IT", "FMCG", "OILGAS",
+    "METAL", "PHARMA", "HEALTHCARE", "TEXTILES", "ENERGY",
+    "REALTY", "TELECOM", "CHEMICAL", "CAPITALGOODS"
+]
+
+OUTPUT_FILE = "sector_mapping_nse.csv"
+
 def fetch_sector_stocks(sector):
-    url = BASE_URL.format(sector)
     try:
+        url = f"https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%20{sector.upper()}"
         response = requests.get(url, headers=HEADERS, timeout=10)
         response.raise_for_status()
         data = response.json()
         return [
-            {"tradingsymbol": entry["symbol"].strip(), "sector": sector}
-            for entry in data.get("data", [])
+            {"tradingsymbol": stock["symbol"], "sector": sector.capitalize()}
+            for stock in data.get("data", [])
         ]
     except Exception as e:
-        print(f"Failed to fetch {sector}: {e}")
+        print(f"❌ Failed to fetch {sector}: {e}")
         return []
 
-def build_sector_mapping():
-    all_data = []
+def main():
+    all_entries = []
     for sector in SECTORS:
-        stocks = fetch_sector_stocks(sector)
-        print(f"Fetched {len(stocks)} from {sector}")
-        all_data.extend(stocks)
-        time.sleep(1)  # Be polite to the server
+        entries = fetch_sector_stocks(sector)
+        all_entries.extend(entries)
+        time.sleep(1)  # avoid rate-limiting
 
-    df = pd.DataFrame(all_data)
-    df.to_csv("sector_mapping.csv", index=False)
-    print(f"✅ sector_mapping.csv written with {len(df)} entries.")
+    df = pd.DataFrame(all_entries).drop_duplicates()
+    df.to_csv(OUTPUT_FILE, index=False)
+    print(f"✅ {OUTPUT_FILE} written with {len(df)} entries.")
 
 if __name__ == "__main__":
-    build_sector_mapping()
+    main()
