@@ -1,27 +1,39 @@
 import pandas as pd
+from pathlib import Path
 
-def load_csv_safely(path):
-    try:
-        return pd.read_csv(path)
-    except FileNotFoundError:
-        print(f"[!] {path} not found.")
-        return pd.DataFrame(columns=["tradingsymbol", "sector"])
+# Load data from all 3 sources
+nse_file = Path("sector_mapping_nse.csv")
+bse_file = Path("sector_mapping_bse.csv")
+override_file = Path("sector_manual_override.csv")
 
-# Load all 3 sources
-nse_df = load_csv_safely("sector_mapping_nse.csv")
-bse_df = load_csv_safely("sector_mapping_bse.csv")
-manual_df = load_csv_safely("sector_manual_override.csv")
+dfs = []
 
-# Combine and deduplicate
-combined_df = pd.concat([nse_df, bse_df], ignore_index=True)
-combined_df.drop_duplicates(subset=["tradingsymbol"], keep="first", inplace=True)
+# Load NSE if it exists
+if nse_file.exists():
+    dfs.append(pd.read_csv(nse_file))
 
-# Manual overrides → overwrite any entries in combined_df
-manual_df.set_index("tradingsymbol", inplace=True)
-combined_df.set_index("tradingsymbol", inplace=True)
-combined_df.update(manual_df)
-combined_df.reset_index(inplace=True)
+# Load BSE if it exists
+if bse_file.exists():
+    dfs.append(pd.read_csv(bse_file))
 
-# Save merged file
-combined_df.to_csv("sector_mapping.csv", index=False)
-print(f"[✓] sector_mapping.csv generated with {len(combined_df)} entries.")
+# Combine NSE + BSE
+combined = pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame(columns=["tradingsymbol", "sector"])
+
+# Drop duplicates by symbol, keep first
+combined = combined.drop_duplicates(subset="tradingsymbol", keep="first")
+
+# Load manual overrides
+if override_file.exists():
+    manual_df = pd.read_csv(override_file)
+    
+    # Remove entries that exist in manual override
+    combined = combined[~combined["tradingsymbol"].isin(manual_df["tradingsymbol"])]
+
+    # Append manual rows at the end
+    combined = pd.concat([combined, manual_df], ignore_index=True)
+
+# Sort and save final master file
+combined = combined.sort_values(by="tradingsymbol").reset_index(drop=True)
+combined.to_csv("sector_mapping.csv", index=False)
+
+print(f"✅ sector_mapping.csv generated with {len(combined)} entries.")
