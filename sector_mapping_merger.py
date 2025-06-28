@@ -1,39 +1,49 @@
 import pandas as pd
 from pathlib import Path
 
-# Load data from all 3 sources
+# File paths
 nse_file = Path("sector_mapping_nse.csv")
 bse_file = Path("sector_mapping_bse.csv")
 override_file = Path("sector_manual_override.csv")
+output_file = Path("sector_mapping.csv")
 
 dfs = []
 
-# Load NSE if it exists
+# Load NSE mappings
 if nse_file.exists():
-    dfs.append(pd.read_csv(nse_file))
+    nse_df = pd.read_csv(nse_file)
+    print(f"✅ Loaded NSE sector mapping: {len(nse_df)} entries")
+    dfs.append(nse_df)
+else:
+    print("⚠️ NSE file missing")
 
-# Load BSE if it exists
+# Load BSE mappings
 if bse_file.exists():
-    dfs.append(pd.read_csv(bse_file))
+    bse_df = pd.read_csv(bse_file)
+    print(f"✅ Loaded BSE sector mapping: {len(bse_df)} entries")
+    dfs.append(bse_df)
+else:
+    print("⚠️ BSE file missing")
 
 # Combine NSE + BSE
-combined = pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame(columns=["tradingsymbol", "sector"])
+combined_df = pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame(columns=["tradingsymbol", "sector"])
+combined_df = combined_df.drop_duplicates(subset="tradingsymbol", keep="first")
 
-# Drop duplicates by symbol, keep first
-combined = combined.drop_duplicates(subset="tradingsymbol", keep="first")
-
-# Load manual overrides
+# Load manual override and apply
 if override_file.exists():
-    manual_df = pd.read_csv(override_file)
-    
-    # Remove entries that exist in manual override
-    combined = combined[~combined["tradingsymbol"].isin(manual_df["tradingsymbol"])]
+    override_df = pd.read_csv(override_file)
+    print(f"✅ Loaded manual overrides: {len(override_df)} entries")
 
-    # Append manual rows at the end
-    combined = pd.concat([combined, manual_df], ignore_index=True)
+    # Remove overridden rows from combined
+    combined_df = combined_df[~combined_df["tradingsymbol"].isin(override_df["tradingsymbol"])]
 
-# Sort and save final master file
-combined = combined.sort_values(by="tradingsymbol").reset_index(drop=True)
-combined.to_csv("sector_mapping.csv", index=False)
+    # Append manual overrides
+    combined_df = pd.concat([combined_df, override_df], ignore_index=True)
+else:
+    print("⚠️ Manual override file missing")
 
-print(f"✅ sector_mapping.csv generated with {len(combined)} entries.")
+# Final sort and save
+combined_df = combined_df.sort_values(by="tradingsymbol").reset_index(drop=True)
+combined_df.to_csv(output_file, index=False)
+
+print(f"✅ {output_file.name} written with {len(combined_df)} final entries.")
