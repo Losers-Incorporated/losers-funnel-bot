@@ -1,32 +1,27 @@
 import pandas as pd
-import os
 
-# File paths
-auto_file = "sector_mapping_auto.csv"
-manual_file = "sector_manual_override.csv"
-output_file = "sector_mapping.csv"
+def load_csv_safely(path):
+    try:
+        return pd.read_csv(path)
+    except FileNotFoundError:
+        print(f"[!] {path} not found.")
+        return pd.DataFrame(columns=["tradingsymbol", "sector"])
 
-def merge_sector_mappings():
-    # Load auto-mapped file
-    if os.path.exists(auto_file):
-        auto_df = pd.read_csv(auto_file)
-    else:
-        auto_df = pd.DataFrame(columns=["tradingsymbol", "sector"])
+# Load all 3 sources
+nse_df = load_csv_safely("sector_mapping_nse.csv")
+bse_df = load_csv_safely("sector_mapping_bse.csv")
+manual_df = load_csv_safely("sector_manual_override.csv")
 
-    # Load manual override file
-    if os.path.exists(manual_file):
-        manual_df = pd.read_csv(manual_file)
-    else:
-        manual_df = pd.DataFrame(columns=["tradingsymbol", "sector"])
+# Combine and deduplicate
+combined_df = pd.concat([nse_df, bse_df], ignore_index=True)
+combined_df.drop_duplicates(subset=["tradingsymbol"], keep="first", inplace=True)
 
-    # Merge with manual taking precedence
-    combined_df = pd.concat([auto_df, manual_df])
-    final_df = combined_df.drop_duplicates(subset="tradingsymbol", keep="last")
-    final_df = final_df.sort_values(by="tradingsymbol")
+# Manual overrides → overwrite any entries in combined_df
+manual_df.set_index("tradingsymbol", inplace=True)
+combined_df.set_index("tradingsymbol", inplace=True)
+combined_df.update(manual_df)
+combined_df.reset_index(inplace=True)
 
-    # Save output
-    final_df.to_csv(output_file, index=False)
-    print(f"✅ sector_mapping.csv generated with {len(final_df)} entries.")
-
-if __name__ == "__main__":
-    merge_sector_mappings()
+# Save merged file
+combined_df.to_csv("sector_mapping.csv", index=False)
+print(f"[✓] sector_mapping.csv generated with {len(combined_df)} entries.")
