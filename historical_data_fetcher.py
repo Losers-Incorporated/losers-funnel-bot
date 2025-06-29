@@ -3,7 +3,7 @@ import pandas as pd
 from kiteconnect import KiteConnect
 from datetime import datetime, timedelta
 
-# Initialize Kite with Render environment variable
+# Initialize Kite with environment variable
 kite = KiteConnect(api_key=os.getenv("KITE_API_KEY"))
 
 # Load access token from file
@@ -21,7 +21,6 @@ def get_instrument_token(trading_symbol):
 def get_historical_data(symbol, days=395):
     """Fetch 395 days of daily OHLCV data"""
     instrument_token = get_instrument_token(symbol)
-
     to_date = datetime.today()
     from_date = to_date - timedelta(days=days)
 
@@ -37,7 +36,14 @@ def get_historical_data(symbol, days=395):
     df["date"] = pd.to_datetime(df["date"])
     return df
 
-# Example usage (for test only)
+# Batch fetch for multiple stocks
 if __name__ == "__main__":
-    df = get_historical_data("RELIANCE")
-    print(df.tail())
+    TICKERS = ["RELIANCE", "INFY", "HDFCBANK", "LT", "SBIN"]  # Modify as needed
+
+    for symbol in TICKERS:
+        try:
+            df = get_historical_data(symbol)
+            df.to_csv(f"{symbol}_OHLC.csv", index=False)
+            print(f"✅ Saved {symbol}_OHLC.csv")
+        except Exception as e:
+            print(f"❌ Failed for {symbol}: {e}")
