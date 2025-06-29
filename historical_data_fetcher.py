@@ -1,8 +1,10 @@
 import os
 import pandas as pd
 from kiteconnect import KiteConnect
+from datetime import datetime, timedelta
 
-kite = KiteConnect(api_key=os.getenv("API_KEY"))
+# Initialize Kite with Render environment variable
+kite = KiteConnect(api_key=os.getenv("KITE_API_KEY"))
 
 # Load access token from file
 with open("access_token.txt", "r") as f:
@@ -16,10 +18,9 @@ def get_instrument_token(trading_symbol):
         return int(match.iloc[0]["instrument_token"])
     raise ValueError(f"Instrument not found for: {trading_symbol}")
 
-def get_historical_data(symbol, days=1800):
-    """Fetch 1800 days of daily OHLCV data"""
+def get_historical_data(symbol, days=395):
+    """Fetch 395 days of daily OHLCV data"""
     instrument_token = get_instrument_token(symbol)
-    from datetime import datetime, timedelta
 
     to_date = datetime.today()
     from_date = to_date - timedelta(days=days)
